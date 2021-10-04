@@ -7,6 +7,9 @@ _Wichtig:_ Bevor man eigene Angebote oder Gesuche aufgibt, muss man einen Telegr
 ### Benutzung des Bots
 In Telegram werden Bots durch Kommandos gesteuert, die man wie „normale“ Chatnachrichten schreibt. 
 Der teilwas Bot versteht folgende Kommandos:
+
+#### /cancel oder /c
+Jederzeit kann man ein Hinzufügen oder Suchen abbrechen, wenn man dieses Kommando eingibt.
 #### /add oder /a
 Hiermit werden neue Einträge angelegt. 
 Nach Eingabe des Kommandos wird man vom Bot durch eine Unterhaltung geführt, durch die alle wichtigen Informationen zum Angebot oder Gesuch erhoben werden. Dies sind nacheinander:
