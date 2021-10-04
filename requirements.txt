@@ -3,3 +3,6 @@ aiogram
 #python-dateutil
 py-staticmaps[cairo] # apt install python3-cairo-dev libcairo2-dev
 python-dotenv
+# apt install libsqlite3-mod-spatialite # libspatialite-dev
+spatialite 
+pysqlite3-binary

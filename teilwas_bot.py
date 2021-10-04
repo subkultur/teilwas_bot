@@ -6,7 +6,7 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext, filters
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher.filters.state import State, StatesGroup
-from aiogram.types import ParseMode, ChatActions, MediaGroup, InputFile
+from aiogram.types import ParseMode
 from aiogram.utils import executor
 from aiogram.types.message import ContentType
 import aiosqlite
@@ -272,6 +272,7 @@ async def process_delete_selection_invalid(message: types.Message, state: FSMCon
 class SearchForm(StatesGroup):
     type = State()
     kind = State()
+    distance = State()
     location = State()
     selection = State()
     
@@ -298,48 +299,70 @@ async def process_search_type(message: types.Message, state: FSMContext):
 async def process_type_invalid(message: types.Message):
     return await message.reply("Bad type. Choose your type from the keyboard.")
 
-@dp.message_handler(state=SearchForm.kind)
-async def process_search_kind(message: types.Message, state: FSMContext):
-    async with state.proxy() as data:
-        data['kind'] = message.text
-    await SearchForm.next()
-    await message.reply("Where are you searching %s?" % message.text, reply_markup=types.ReplyKeyboardRemove())
-
-@dp.message_handler(lambda message: message.text not in ["Offer", "Search", "All"], state=SearchForm.kind)
-async def process_search_kind_invalid(message: types.Message):
-    return await message.reply("Bad offer type. Choose your offer type from the keyboard.")
-
-@dp.message_handler(content_types=ContentType.LOCATION, state=SearchForm.location)
-async def process_search_location(message: types.Message, state: FSMContext):
+async def do_search_entries(message, data, state):
     markup = types.ReplyKeyboardRemove()
-    async with state.proxy() as data:
-        data['location'] = message.location
-        results = await search_db(message.from_user.id, data['type'], data['kind'], data['location'])
-        if len(results) > 0:
-            data['selection'] = results
-            await SearchForm.next()
-            await bot.send_message(
-                    message.chat.id,
-                    md.text(
-                        md.text("Found %s entries! Details:" % len(results)),
-                        sep='\n',
-                    ),
-                    reply_markup=markup,
-                    parse_mode=ParseMode.MARKDOWN,
-                )
-            await show_results(bot, message, results)
-            await message.reply("Pick one by entering its #.")
-        else:
-            await bot.send_message(
+    results = await search_db(message.from_user.id, data['type'], data['kind'], data['location'], data['distance'])
+    if len(results) > 0:
+        data['selection'] = results
+        await SearchForm.next()
+        await bot.send_message(
                 message.chat.id,
                 md.text(
-                    md.text('Found nothing! Consider creating a search entry..'),
+                    md.text("Found %s entries! Details:" % len(results)),
                     sep='\n',
                 ),
                 reply_markup=markup,
                 parse_mode=ParseMode.MARKDOWN,
             )
-            await state.finish()
+        await show_results(bot, message, results)
+        await message.reply("Pick one by entering its #.")
+    else:
+        await bot.send_message(
+            message.chat.id,
+            md.text(
+                md.text('Found nothing! Consider creating a search entry..'),
+                sep='\n',
+            ),
+            reply_markup=markup,
+            parse_mode=ParseMode.MARKDOWN,
+        )
+        await state.finish()
+
+@dp.message_handler(state=SearchForm.kind)
+async def process_search_kind(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['kind'] = message.text
+    await SearchForm.next()
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
+    markup.add("Everywhere")
+    markup.add("5", "10", "50", "100")
+    await message.reply("Do you want to search within a specific distance (in kilometers)?", reply_markup=markup)
+
+@dp.message_handler(lambda message: message.text not in ["Offer", "Search", "All"], state=SearchForm.kind)
+async def process_search_kind_invalid(message: types.Message):
+    return await message.reply("Bad offer type. Choose your offer type from the keyboard.")
+
+@dp.message_handler(state=SearchForm.distance)
+async def process_search_distance(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['distance'] = message.text
+        if message.text == 'Everywhere':
+            data['location'] = None
+            await SearchForm.next()
+            await do_search_entries(message, data, state)
+        else:
+            await SearchForm.next()
+            await message.reply("Where are you searching %s?" % data['type'], reply_markup=types.ReplyKeyboardRemove())
+
+@dp.message_handler(lambda message: not message.text.isdigit() or message != 'Everywhere', state=SearchForm.distance)
+async def process_search_distance_invalid(message: types.Message, state: FSMContext):
+    return await message.reply("Bad distance. Please enter a number of kilometers.")
+
+@dp.message_handler(content_types=ContentType.LOCATION, state=SearchForm.location)
+async def process_search_location(message: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data['location'] = message.location
+        await do_search_entries(message, data, state)
 
 @dp.message_handler(lambda message: message.text.isdigit(), state=SearchForm.selection)
 async def process_search_selection(message: types.Message, state: FSMContext):
@@ -433,7 +456,7 @@ async def process_description(message: types.Message, state: FSMContext):
     await AddForm.next()
     await message.reply("Please enter a expiration date in DD.MM.YYYY format or a number of days or 'never'.")
 
-@dp.message_handler(filters.Regexp('^([0-9]{1,2})\.([0-9]{1,2})\.([0-9]{4})$|^([0-9]+)$|^never$'), state=AddForm.expires_at)
+@dp.message_handler(filters.Regexp('^([0-9]{1,2})\.([0-9]{1,2})\.([0-9]{4})$|^([0-9]+)$|^never$|^Never$'), state=AddForm.expires_at)
 async def process_expires_at(message: types.Message, state: FSMContext):
     expires_at = None
     expires_str = 'never'
@@ -482,17 +505,24 @@ async def process_expires_at_invalid(message: types.Message, state: FSMContext):
 
 DB = 'db.sqlite'
 
-async def search_db(user_id, type, kind, location):
+async def search_db(user_id, type, kind, location, distance):
     curdate = str(datetime.now().strftime('%Y%m%d'))
     query = "SELECT * FROM geteilt where expires_at > " + curdate
     query += " AND user_id <> " + str(user_id) 
-    if not type == 'All':
+    if type != 'All':
         query += " AND type = " + type
-    if not kind == 'All':
+    if kind != 'All':
         query += " AND kind = " + kind
-    
+
+    if location is not None:
+        dist = int(distance) * 1000
+        query += " AND (PtDistWithin(geteilt.latlng, PointFromText('POINT(" + str(location.longitude) + " " + str(location.latitude) + ")', 4326), " + str(dist) + ")=TRUE)"
+        
+    query += ";"
     res = []
     async with aiosqlite.connect(DB) as db:
+        await db.enable_load_extension(True)
+        await db.load_extension('mod_spatialite')
         async with db.execute(query) as cursor:
             async for row in cursor:
                 res.append(row)
@@ -500,11 +530,11 @@ async def search_db(user_id, type, kind, location):
 
 async def delete_from_db(entry_uid):
     async with aiosqlite.connect(DB) as db:
-        await db.execute("DELETE FROM geteilt WHERE id = " + str(entry_uid))
+        await db.execute("DELETE FROM geteilt WHERE id = " + str(entry_uid) + ";")
         await db.commit()
 
 async def search_own_db(user_id):
-    query = "SELECT * FROM geteilt where user_id = " + str(user_id)
+    query = "SELECT * FROM geteilt where user_id = " + str(user_id) + ";"
     res = []
     async with aiosqlite.connect(DB) as db:
         async with db.execute(query) as cursor:
@@ -515,24 +545,44 @@ async def search_own_db(user_id):
 async def add_db_entry(user_id, type, kind, location, description, expires_at):
     currentDateTime = datetime.now().strftime('%Y%m%d')
     async with aiosqlite.connect(DB) as db:
-        await db.execute("INSERT INTO geteilt(user_id, type, kind, lat, lng, desc, inserted_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", 
-                (user_id, type, kind, location.latitude, location.longitude, description, currentDateTime, str(expires_at.strftime('%Y%m%d'))))
+        await db.enable_load_extension(True)
+        await db.execute("SELECT load_extension('mod_spatialite');")
+        last_row = None
+        async with db.execute("INSERT INTO geteilt(user_id, type, kind, lat, lng, desc, inserted_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?);", 
+                (user_id, type, kind, location.latitude, location.longitude, 
+                description, currentDateTime, str(expires_at.strftime('%Y%m%d')))) as cursor:
+            last_row = cursor.lastrowid
+        await db.execute("UPDATE geteilt SET latlng = PointFromText('POINT(" + str(location.longitude) + " " + str(location.latitude) + ")', 4326) WHERE id = " + str(last_row) + ";")
         await db.commit()
+
+async def check_point_col_exists(db):
+    point_col_exists = False
+    async with db.execute("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'geteilt';") as cursor:
+        async for row in cursor:
+            point_col_exists = 'POINT' in row[0]
+    return point_col_exists
 
 async def init_db():
     async with aiosqlite.connect(DB) as db:
-        await db.execute("""CREATE TABLE IF NOT EXISTS geteilt (
-            id INTEGER PRIMARY KEY AUTOINCREMENT, 
-            user_id INTEGER,
-            type VARCHAR(10),
-            kind VARCHAR(10),
-            lat FLOAT,
-            lng FLOAT,
-            desc TEXT,
-            inserted_at text,
-            expires_at text
-            )""")
-        await db.commit()
+        point_col_exists = await check_point_col_exists(db)
+        if not point_col_exists:
+            await db.enable_load_extension(True)
+            await db.execute("SELECT load_extension('mod_spatialite');")
+            await db.execute("SELECT InitSpatialMetaData();")
+            await db.execute("""CREATE TABLE IF NOT EXISTS geteilt (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                type VARCHAR(10),
+                kind VARCHAR(10),
+                lat FLOAT,
+                lng FLOAT,
+                desc TEXT,
+                inserted_at text,
+                expires_at text
+                );""")
+            await db.execute("SELECT AddGeometryColumn('geteilt', 'latlng', 4326, 'POINT', 'XY');")
+            await db.execute("SELECT CreateSpatialIndex('geteilt', 'latlng');")
+            await db.commit()
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()

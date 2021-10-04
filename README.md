@@ -12,7 +12,7 @@ Hiermit werden neue Einträge angelegt.
 Nach Eingabe des Kommandos wird man vom Bot durch eine Unterhaltung geführt, durch die alle wichtigen Informationen zum Angebot oder Gesuch erhoben werden. Dies sind nacheinander:
 * Kategorie des Eintrags: Essen, Sache oder Fähigkeit
 * Art des Eintrags: Angebot an andere oder Gesuch von anderen 
-* Ort des Eintrags
+* Ort des Eintrags. Dies ist nötig, damit in Abhängigkeit einer Entfernung gesucht werden kann.
 * Eine Beschreibung des Eintrags 
 * Ein (optionales) Ablaufdatum des Eintrags. Hier kann entweder ein konkretes in der Zukunft liegendes Datum eingeheben werden (in der Form „3.4.2022“) oder eine Anzahl von Tagen, die der Eintrag gültig sein soll (einfach als Zahl, z.B. „30“).
 
@@ -21,7 +21,13 @@ Hiermit werden vorhandene Einträge anderer Benutzer gesucht.
 Wie beim Anlegen von Einträgen fragt der Bot verschiedene Informationen zum Gesuchten ab:
 * Kategorie des Eintrags: Essen, Sache oder Fähigkeit. Auch die Wahl von Alles ist möglich, wenn die Kategorie egal ist. 
 * Art des Eintrags: Angebot an andere oder Gesuch von anderen. Auch die Wahl von Alles ist möglich, wenn die Art egal ist. 
-* Ort des Eintrags
+* Entfernung des Eintrags: Hier kann man verschiedene Entfernen in Kilometern auswählen, die der Eintrag entfernt sein darf. 
+Man kann auch entweder eine beliebige Entfernung (in Kilometern) eintragen. Oder man kann "überall" wählen, dann wird die Abfrage des eigenen Ortes übersprungen.
+* Ort des Eintrags: Anzugeben, um nur in einer bestimmten Entfernung zu suchen.  
+
+Wenn etwas mit den gewählten Einschränkungen gefunden werden konnte, wird eine Liste und eine Kartenansicht der Ergebnisse zurück gegeben.  
+Den Listeneinträgen ist eine Zahl vorangestellt. Durch Eingabe dieser Zahl wird der Ersteller des Eintrags darüber informiert, dass Du daran Interesse hast, und hat dann die 
+Möglichkeit Dich zu kontaktieren.
 
 #### /list oder /l
 Hiermit kann man eigene Einträge auflisten. 
@@ -32,4 +38,3 @@ Nach Eingabe des Befehls werden alle eigenen Einträge aufgelistet. Durch folgen
 
 ##### Weitere Ideen:
 * Sollte es möglich sein Suchen abonnieren zu können? Dass man also automatisch benachrichtigt wird, wenn neue Einträge einer gewählten Kategorie angelegt werden?
-* Wie mit der Ortsbezogenheit umgehen?
