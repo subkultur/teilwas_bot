@@ -223,7 +223,7 @@ async def cmd_list(message: types.Message, state: FSMContext):
     if len(results) > 0:
         await show_results(bot, message, results)
     else:
-        await message.reply("Could not find any entry.")
+        await message.reply("Could not find any entries.")
 
 class DeleteForm(StatesGroup):
     selection = State()
@@ -238,7 +238,7 @@ async def cmd_delete(message: types.Message, state: FSMContext):
         await DeleteForm.next()
         await message.reply("Which entry do you want to delete?")
     else:
-        await message.reply("Could not find any entry.")
+        await message.reply("Could not find any entries.")
         await state.finish()
 
 @dp.message_handler(lambda message: message.text.isdigit(), state=DeleteForm.selection)
@@ -252,7 +252,7 @@ async def process_delete_selection(message: types.Message, state: FSMContext):
             await bot.send_message(
                     message.chat.id,
                     md.text(
-                        md.text('Entry #', md.bold(str(sel + 1)), ' was deleted.'),
+                        md.text('Entry #', md.bold(str(sel + 1)), ' was successfully deleted.'),
                         sep='\n',
                     ),
                     parse_mode=ParseMode.MARKDOWN,
@@ -320,7 +320,7 @@ async def do_search_entries(message, data, state):
         await bot.send_message(
             message.chat.id,
             md.text(
-                md.text('Found nothing! Consider creating a search entry..'),
+                md.text('Found nothing! Consider creating a search entry.'),
                 sep='\n',
             ),
             reply_markup=markup,
