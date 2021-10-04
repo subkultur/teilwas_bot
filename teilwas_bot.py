@@ -352,7 +352,7 @@ async def process_search_distance(message: types.Message, state: FSMContext):
             await do_search_entries(message, data, state)
         else:
             await SearchForm.next()
-            await message.reply("Where are you searching %s?" % data['type'], reply_markup=types.ReplyKeyboardRemove())
+            await message.reply("Where are you searching for %s?" % data['type'], reply_markup=types.ReplyKeyboardRemove())
 
 @dp.message_handler(lambda message: not message.text.isdigit() or message != 'Everywhere', state=SearchForm.distance)
 async def process_search_distance_invalid(message: types.Message, state: FSMContext):
