@@ -296,7 +296,7 @@ async def process_search_type(message: types.Message, state: FSMContext):
     await message.reply("Do you search for an offer?", reply_markup=markup)
 
 @dp.message_handler(lambda message: message.text not in ["Food", "Skill", "Thing", "All"], state=SearchForm.type)
-async def process_type_invalid(message: types.Message):
+async def process_search_type_invalid(message: types.Message):
     return await message.reply("Bad type. Choose your type from the keyboard.")
 
 async def do_search_entries(message, data, state):
@@ -414,18 +414,18 @@ async def cmd_add(message: types.Message):
     await message.reply("What type of thing do you want to share?", reply_markup=markup)
 
 @dp.message_handler(state=AddForm.kind)
-async def process_kind(message: types.Message, state: FSMContext):
+async def process_add_kind(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['kind'] = message.text
     await AddForm.next()
     await message.reply("Where is that %s?" % message.text, reply_markup=types.ReplyKeyboardRemove())
 
 @dp.message_handler(lambda message: message.text not in ["Offer", "Search"], state=AddForm.kind)
-async def process_kind_invalid(message: types.Message):
+async def process_add_kind_invalid(message: types.Message):
     return await message.reply("Bad offer type. Choose your offer type from the keyboard.")
 
 @dp.message_handler(state=AddForm.type)
-async def process_type(message: types.Message, state: FSMContext):
+async def process_add_type(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['type'] = message.text
     await AddForm.next()
@@ -434,11 +434,11 @@ async def process_type(message: types.Message, state: FSMContext):
     await message.reply("Do you want to offer it or are you searching?", reply_markup=markup)
 
 @dp.message_handler(lambda message: message.text not in ["Food", "Skill", "Thing"], state=AddForm.type)
-async def process_type_invalid(message: types.Message):
+async def process_add_type_invalid(message: types.Message):
     return await message.reply("Bad type. Choose your type from the keyboard.")
 
 @dp.message_handler(content_types=ContentType.LOCATION, state=AddForm.location)
-async def process_location(message: types.Message, state: FSMContext):
+async def process_add_location(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['location'] = message.location
     #await state.update_data(location=)
@@ -446,18 +446,18 @@ async def process_location(message: types.Message, state: FSMContext):
     await message.reply("Please describe %s." % data['type'])
 
 @dp.message_handler(content_types=ContentType.ANY, state=AddForm.location)
-async def process_location_invalid(message: types.Message, state: FSMContext):
+async def process_add_location_invalid(message: types.Message, state: FSMContext):
     return await message.reply("Bad location. Please share a location.")
 
 @dp.message_handler(state=AddForm.description)
-async def process_description(message: types.Message, state: FSMContext):
+async def process_add_description(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['description'] = message.text
     await AddForm.next()
     await message.reply("Please enter a expiration date in DD.MM.YYYY format or a number of days or 'never'.")
 
 @dp.message_handler(filters.Regexp('^([0-9]{1,2})\.([0-9]{1,2})\.([0-9]{4})$|^([0-9]+)$|^never$|^Never$'), state=AddForm.expires_at)
-async def process_expires_at(message: types.Message, state: FSMContext):
+async def process_add_expires_at(message: types.Message, state: FSMContext):
     expires_at = None
     expires_str = 'never'
     if message.text == 'never':
@@ -500,7 +500,7 @@ async def process_expires_at(message: types.Message, state: FSMContext):
     await state.finish()
 
 @dp.message_handler(state=AddForm.expires_at)
-async def process_expires_at_invalid(message: types.Message, state: FSMContext):
+async def process_add_expires_at_invalid(message: types.Message, state: FSMContext):
     return await message.reply("Bad date. Please enter it in DD.MM.YYYY format or a number of days or 'never'.")
 
 DB = 'db.sqlite'
