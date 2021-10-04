@@ -172,18 +172,22 @@ async def render_map(locations):
     png_bytes.seek(0)
     return png_bytes
 
+def format_expires_at(expires):
+    expires_str = None
+    expires_at = re.search(r"([0-9]{4})([0-9]{2})([0-9]{2})", expires)
+    if expires_at.group(1) == '9999':
+        expires_str = 'never'
+    else:
+        expires_str = '%s.%s.%s' % (expires_at.group(3), expires_at.group(2), expires_at.group(1))
+    return expires_str
+
 async def show_results(bot, message, results):
     chat_id = message.chat.id
     markup = types.ReplyKeyboardRemove()
     num = 1
     locations = []
     for result in results:
-        expires_str = None
-        expires_at = re.search(r"([0-9]{4})([0-9]{2})([0-9]{2})", result[8])
-        if expires_at.group(3) == '9999':
-            expires_str = 'never'
-        else:
-            expires_str = '%s.%s.%s' % (expires_at.group(3), expires_at.group(2), expires_at.group(1))
+        expires_str = format_expires_at(result[8])
         locations.append((result[4], result[5]))
         await bot.send_message(
             chat_id,
@@ -432,6 +436,7 @@ async def process_description(message: types.Message, state: FSMContext):
 @dp.message_handler(filters.Regexp('^([0-9]{1,2})\.([0-9]{1,2})\.([0-9]{4})$|^([0-9]+)$|^never$'), state=AddForm.expires_at)
 async def process_expires_at(message: types.Message, state: FSMContext):
     expires_at = None
+    expires_str = 'never'
     if message.text == 'never':
         expires_at = datetime(9999, 12, 31, 23, 59, 59)
     else:
@@ -451,6 +456,7 @@ async def process_expires_at(message: types.Message, state: FSMContext):
             if expires_at < datetime.now():
                 await message.reply("Please enter a valid future expiration date in DD.MM.YYYY format or a number of days or 'never'.")
                 return
+        expires_str = expires_at.strftime("%d.%m.%Y")
     async with state.proxy() as data:
         markup = types.ReplyKeyboardRemove()
         await bot.send_message(
@@ -460,7 +466,7 @@ async def process_expires_at(message: types.Message, state: FSMContext):
                 md.text('Type:', md.bold(data['type'])),
                 md.text('Kind:', md.bold(data['kind'])),
                 md.text('Location:', md.bold(data['location'])),
-                md.text('Expires at:', md.bold(expires_at.strftime("%d.%m.%Y"))),
+                md.text('Expires at:', md.bold(expires_str)),
                 md.text('Description:', md.bold(data['description'])),
                 sep='\n',
             ),
