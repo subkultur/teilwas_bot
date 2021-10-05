@@ -159,11 +159,25 @@ async def render_map(locations):
     context = staticmaps.Context()
     context.set_tile_provider(staticmaps.tile_provider_OSM)
 
+    # merge markers that would end up overlapping
+    # doing this "properly" would require a 2nd pass, so..
     num = 1
+    markers = []
     for loc in locations:
-        poi = staticmaps.create_latlng(loc[0], loc[1])
-        context.add_object(TextLabel(poi, str(num)))
+        str_loc_lat = f'{loc[0]:.4f}'
+        str_loc_lng = f'{loc[1]:.4f}'
+        merged = False
+        for idx, m in enumerate(markers):
+            if not merged and m[0] == str_loc_lat and m[1] == str_loc_lng:
+                markers[idx] = (m[0], m[1], m[2] + " + " + str(num), m[3], m[4])
+                merged = True
+        if not merged:
+            markers.append((str_loc_lat, str_loc_lng, str(num), loc[0], loc[1]))
         num += 1
+
+    for m in markers:
+        poi = staticmaps.create_latlng(m[3], m[4])
+        context.add_object(TextLabel(poi, m[2]))
     
     image = context.render_cairo(800, 500)
     png_bytes = io.BytesIO()
