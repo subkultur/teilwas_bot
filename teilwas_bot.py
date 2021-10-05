@@ -273,9 +273,9 @@ async def process_add_type_invalid(message: types.Message):
 @dp.message_handler(content_types=ContentType.LOCATION, state=AddForm.location)
 async def process_add_location(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
-        await data['location'] = message.location
+        data['location'] = message.location
         await AddForm.next()
-        await message.reply("Please add a descriptions." % data['type'])
+        await message.reply("Please describe %s." % data['type'])
 
 @dp.message_handler(content_types=ContentType.ANY, state=AddForm.location)
 async def process_add_location_invalid(message: types.Message, state: FSMContext):
