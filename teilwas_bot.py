@@ -86,8 +86,6 @@ class DeleteForm(StatesGroup):
 async def cmd_delete(message: types.Message, state: FSMContext):
     results = await search_own_db(message.from_user.id)
     if len(results) > 0:
-        # async with state.proxy() as data:
-        #     data['selection'] = results
         await state.update_data(selection=results)
         await show_results(bot, message, results)
         await DeleteForm.next()
@@ -157,11 +155,11 @@ async def do_search_entries(message, data, state):
     if len(results) > 0:
         data['selection'] = results
         await SearchForm.next()
-        await message.reply("Found %s entries! Details:" % len(results))
+        await message.reply("Found %s entries! Details:" % len(results), reply_markup=types.ReplyKeyboardRemove())
         await show_results(bot, message, results)
         await message.reply("Pick one by entering its #.")
     else:
-        await message.reply("Found nothing! Consider creating a search entry.")
+        await message.reply("Found nothing! Consider creating a search entry.", reply_markup=types.ReplyKeyboardRemove())
         await state.finish()
 
 @dp.message_handler(state=SearchForm.kind)
