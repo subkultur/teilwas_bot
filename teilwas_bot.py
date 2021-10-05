@@ -9,144 +9,15 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.types import ParseMode
 from aiogram.utils import executor
 from aiogram.types.message import ContentType
-import aiosqlite
 import asyncio
 from datetime import datetime, timedelta
 import re
-import staticmaps
-import cairo
-import s2sphere
-import io
 from dotenv import load_dotenv
 import os
+from tw_map import render_map
+from tw_db import search_own_db, delete_from_db, search_db, add_db_entry, init_db
 
 load_dotenv()
-
-# https://github.com/flopp/py-staticmaps/blob/master/examples/custom_objects.py
-class TextLabel(staticmaps.Object):
-    def __init__(self, latlng: s2sphere.LatLng, text: str) -> None:
-        staticmaps.Object.__init__(self)
-        self._latlng = latlng
-        self._text = text
-        self._margin = 4
-        self._arrow = 16
-        self._font_size = 12
-
-    def latlng(self) -> s2sphere.LatLng:
-        return self._latlng
-
-    def bounds(self) -> s2sphere.LatLngRect:
-        return s2sphere.LatLngRect.from_point(self._latlng)
-
-    def extra_pixel_bounds(self) -> staticmaps.PixelBoundsT:
-        # Guess text extents.
-        tw = len(self._text) * self._font_size * 0.5
-        th = self._font_size * 1.2
-        w = max(self._arrow, tw + 2.0 * self._margin)
-        return (int(w / 2.0), int(th + 2.0 * self._margin + self._arrow), int(w / 2), 0)
-
-    def render_pillow(self, renderer: staticmaps.PillowRenderer) -> None:
-        x, y = renderer.transformer().ll2pixel(self.latlng())
-        x = x + renderer.offset_x()
-
-        tw, th = renderer.draw().textsize(self._text)
-        w = max(self._arrow, tw + 2 * self._margin)
-        h = th + 2 * self._margin
-
-        path = [
-            (x, y),
-            (x + self._arrow / 2, y - self._arrow),
-            (x + w / 2, y - self._arrow),
-            (x + w / 2, y - self._arrow - h),
-            (x - w / 2, y - self._arrow - h),
-            (x - w / 2, y - self._arrow),
-            (x - self._arrow / 2, y - self._arrow),
-        ]
-
-        renderer.draw().polygon(path, fill=(255, 255, 255, 255))
-        renderer.draw().line(path, fill=(255, 0, 0, 255))
-        renderer.draw().text((x - tw / 2, y - self._arrow - h / 2 - th / 2), self._text, fill=(0, 0, 0, 255))
-
-    def render_cairo(self, renderer: staticmaps.CairoRenderer) -> None:
-        x, y = renderer.transformer().ll2pixel(self.latlng())
-
-        ctx = renderer.context()
-        ctx.select_font_face("Sans", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
-
-        ctx.set_font_size(self._font_size)
-        x_bearing, y_bearing, tw, th, _, _ = ctx.text_extents(self._text)
-
-        w = max(self._arrow, tw + 2 * self._margin)
-        h = th + 2 * self._margin
-
-        path = [
-            (x, y),
-            (x + self._arrow / 2, y - self._arrow),
-            (x + w / 2, y - self._arrow),
-            (x + w / 2, y - self._arrow - h),
-            (x - w / 2, y - self._arrow - h),
-            (x - w / 2, y - self._arrow),
-            (x - self._arrow / 2, y - self._arrow),
-        ]
-
-        ctx.set_source_rgb(1, 1, 1)
-        ctx.new_path()
-        for p in path:
-            ctx.line_to(*p)
-        ctx.close_path()
-        ctx.fill()
-
-        ctx.set_source_rgb(1, 0, 0)
-        ctx.set_line_width(1)
-        ctx.new_path()
-        for p in path:
-            ctx.line_to(*p)
-        ctx.close_path()
-        ctx.stroke()
-
-        ctx.set_source_rgb(0, 0, 0)
-        ctx.set_line_width(1)
-        ctx.move_to(x - tw / 2 - x_bearing, y - self._arrow - h / 2 - y_bearing - th / 2)
-        ctx.show_text(self._text)
-        ctx.stroke()
-
-    def render_svg(self, renderer: staticmaps.SvgRenderer) -> None:
-        x, y = renderer.transformer().ll2pixel(self.latlng())
-
-        # guess text extents
-        tw = len(self._text) * self._font_size * 0.5
-        th = self._font_size * 1.2
-
-        w = max(self._arrow, tw + 2 * self._margin)
-        h = th + 2 * self._margin
-
-        path = renderer.drawing().path(
-            fill="#ffffff",
-            stroke="#ff0000",
-            stroke_width=1,
-            opacity=1.0,
-        )
-        path.push(f"M {x} {y}")
-        path.push(f" l {self._arrow / 2} {-self._arrow}")
-        path.push(f" l {w / 2 - self._arrow / 2} 0")
-        path.push(f" l 0 {-h}")
-        path.push(f" l {-w} 0")
-        path.push(f" l 0 {h}")
-        path.push(f" l {w / 2 - self._arrow / 2} 0")
-        path.push("Z")
-        renderer.group().add(path)
-
-        renderer.group().add(
-            renderer.drawing().text(
-                self._text,
-                text_anchor="middle",
-                dominant_baseline="central",
-                insert=(x, y - self._arrow - h / 2),
-                font_family="sans-serif",
-                font_size=f"{self._font_size}px",
-                fill="#000000",
-            )
-        )
 
 logging.basicConfig(level=logging.INFO)
 
@@ -154,37 +25,6 @@ bot = Bot(token=os.environ.get('TELEGRAM_API_TOKEN'))
 
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
-
-async def render_map(locations):
-    context = staticmaps.Context()
-    context.set_tile_provider(staticmaps.tile_provider_OSM)
-
-    # merge markers that would end up overlapping
-    # doing this "properly" would require a 2nd pass, so..
-    num = 1
-    markers = []
-    for loc in locations:
-        str_loc_lat = f'{loc[0]:.4f}'
-        str_loc_lng = f'{loc[1]:.4f}'
-        merged = False
-        for idx, m in enumerate(markers):
-            if not merged and m[0] == str_loc_lat and m[1] == str_loc_lng:
-                markers[idx] = (m[0], m[1], m[2] + " + " + str(num), m[3], m[4])
-                merged = True
-        if not merged:
-            markers.append((str_loc_lat, str_loc_lng, str(num), loc[0], loc[1]))
-        num += 1
-
-    for m in markers:
-        poi = staticmaps.create_latlng(m[3], m[4])
-        context.add_object(TextLabel(poi, m[2]))
-    
-    image = context.render_cairo(800, 500)
-    png_bytes = io.BytesIO()
-    image.write_to_png(png_bytes)
-    png_bytes.flush()
-    png_bytes.seek(0)
-    return png_bytes
 
 def format_expires_at(expires):
     expires_str = None
@@ -516,87 +356,6 @@ async def process_add_expires_at(message: types.Message, state: FSMContext):
 @dp.message_handler(state=AddForm.expires_at)
 async def process_add_expires_at_invalid(message: types.Message, state: FSMContext):
     return await message.reply("Bad date. Please enter it in DD.MM.YYYY format or a number of days or 'never'.")
-
-DB = 'db.sqlite'
-
-async def search_db(user_id, type, kind, location, distance):
-    curdate = str(datetime.now().strftime('%Y%m%d'))
-    query = "SELECT * FROM geteilt where expires_at > " + curdate
-    query += " AND user_id <> " + str(user_id) 
-    if type != 'All':
-        query += " AND type = " + type
-    if kind != 'All':
-        query += " AND kind = " + kind
-
-    if location is not None:
-        dist = int(distance) * 1000
-        query += " AND (PtDistWithin(geteilt.latlng, PointFromText('POINT(" + str(location.longitude) + " " + str(location.latitude) + ")', 4326), " + str(dist) + ")=TRUE)"
-        
-    query += ";"
-    res = []
-    async with aiosqlite.connect(DB) as db:
-        await db.enable_load_extension(True)
-        await db.load_extension('mod_spatialite')
-        async with db.execute(query) as cursor:
-            async for row in cursor:
-                res.append(row)
-    return res
-
-async def delete_from_db(entry_uid):
-    async with aiosqlite.connect(DB) as db:
-        await db.execute("DELETE FROM geteilt WHERE id = " + str(entry_uid) + ";")
-        await db.commit()
-
-async def search_own_db(user_id):
-    query = "SELECT * FROM geteilt where user_id = " + str(user_id) + ";"
-    res = []
-    async with aiosqlite.connect(DB) as db:
-        async with db.execute(query) as cursor:
-            async for row in cursor:
-                res.append(row)
-    return res
-
-async def add_db_entry(user_id, type, kind, location, description, expires_at):
-    currentDateTime = datetime.now().strftime('%Y%m%d')
-    async with aiosqlite.connect(DB) as db:
-        await db.enable_load_extension(True)
-        await db.execute("SELECT load_extension('mod_spatialite');")
-        last_row = None
-        async with db.execute("INSERT INTO geteilt(user_id, type, kind, lat, lng, desc, inserted_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?);", 
-                (user_id, type, kind, location.latitude, location.longitude, 
-                description, currentDateTime, str(expires_at.strftime('%Y%m%d')))) as cursor:
-            last_row = cursor.lastrowid
-        await db.execute("UPDATE geteilt SET latlng = PointFromText('POINT(" + str(location.longitude) + " " + str(location.latitude) + ")', 4326) WHERE id = " + str(last_row) + ";")
-        await db.commit()
-
-async def check_point_col_exists(db):
-    point_col_exists = False
-    async with db.execute("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'geteilt';") as cursor:
-        async for row in cursor:
-            point_col_exists = 'POINT' in row[0]
-    return point_col_exists
-
-async def init_db():
-    async with aiosqlite.connect(DB) as db:
-        point_col_exists = await check_point_col_exists(db)
-        if not point_col_exists:
-            await db.enable_load_extension(True)
-            await db.execute("SELECT load_extension('mod_spatialite');")
-            await db.execute("SELECT InitSpatialMetaData();")
-            await db.execute("""CREATE TABLE IF NOT EXISTS geteilt (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER,
-                type VARCHAR(10),
-                kind VARCHAR(10),
-                lat FLOAT,
-                lng FLOAT,
-                desc TEXT,
-                inserted_at text,
-                expires_at text
-                );""")
-            await db.execute("SELECT AddGeometryColumn('geteilt', 'latlng', 4326, 'POINT', 'XY');")
-            await db.execute("SELECT CreateSpatialIndex('geteilt', 'latlng');")
-            await db.commit()
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
