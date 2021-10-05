@@ -34,9 +34,11 @@ def format_expires_at(expires):
         expires_str = '%s.%s.%s' % (expires_at.group(3), expires_at.group(2), expires_at.group(1))
     return expires_str
 
+def clean_for_md(s):
+    return re.sub(r'([\.\(\)])', r'\\\g<1>', s)
+    
 async def show_results(bot, message, results):
     chat_id = message.chat.id
-    markup = types.ReplyKeyboardRemove()
     num = 1
     locations = []
     for result in results:
@@ -45,16 +47,16 @@ async def show_results(bot, message, results):
         await bot.send_message(
             chat_id,
             md.text(
-                md.text('#', md.bold(num)),
-                md.text('Type:', md.bold(result[2])),
-                md.text('Kind:', md.bold(result[3])),
-                md.text('Expires at:', md.bold(expires_str)),
-                md.text('Description:'),
-                md.text(md.bold(result[6])), #todo send dots unescaped, those are interpreted as MD -.-
+                md.text('\#', md.bold(num)),
+                md.text(md.bold('Type:'), result[2]),
+                md.text(md.bold('Kind:'), result[3]),
+                md.text(md.bold('Expires at:'), clean_for_md(expires_str)),
+                md.text(md.bold('Description:')),
+                md.text(clean_for_md(result[6])),
                 sep='\n',
             ),
-            reply_markup=markup,
-            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=types.ReplyKeyboardRemove(),
+            parse_mode='MarkdownV2'#ParseMode.MARKDOWN,
         )
         num += 1
     await types.ChatActions.upload_photo()
@@ -281,7 +283,8 @@ async def process_add_location_invalid(message: types.Message, state: FSMContext
 
 @dp.message_handler(state=AddForm.description)
 async def process_add_description(message: types.Message, state: FSMContext):
-    await state.update_data(description=message.text)
+    desc = re.sub(r'[^A-Za-z0-9\.,;:\(\)]', '', message.text)
+    await state.update_data(description=desc)
     await AddForm.next()
     await message.reply("Please enter a expiration date in DD.MM.YYYY format or a number of days or 'never'.")
 
@@ -310,20 +313,20 @@ async def process_add_expires_at(message: types.Message, state: FSMContext):
                 return
         expires_str = expires_at.strftime("%d.%m.%Y")
     async with state.proxy() as data:
-        markup = types.ReplyKeyboardRemove()
         await bot.send_message(
             message.chat.id,
             md.text(
-                md.text('Thanks for sharing! Details:'),
-                md.text('Type:', md.bold(data['type'])),
-                md.text('Kind:', md.bold(data['kind'])),
-                md.text('Location:', md.bold(data['location'])),
-                md.text('Expires at:', md.bold(expires_str)),
-                md.text('Description:', md.bold(data['description'])),
+                md.text(md.bold('Thanks for sharing!'), 'Details:'),
+                md.text(md.bold('Type:'), data['type']),
+                md.text(md.bold('Kind:'), data['kind']),
+                md.text(md.bold('Location:'), clean_for_md(str(data['location'].latitude)) + " / " + clean_for_md(str(data['location'].longitude))),
+                md.text(md.bold('Expires at:'), clean_for_md(expires_str)),
+                md.text(md.bold('Description:')),
+                md.text(clean_for_md(data['description'])),
                 sep='\n',
             ),
-            reply_markup=markup,
-            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=types.ReplyKeyboardRemove(),
+            parse_mode='MarkdownV2'#ParseMode.MARKDOWN,
         )
         await add_db_entry(message.from_user.id, data['type'], data['kind'], data['location'], data['description'], expires_at)
     await state.finish()
