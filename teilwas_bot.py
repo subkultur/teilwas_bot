@@ -57,6 +57,7 @@ async def show_results(bot, message, results):
             parse_mode=ParseMode.MARKDOWN,
         )
         num += 1
+    await types.ChatActions.upload_photo()
     map = await render_map(locations)
     await message.reply_photo(map, "Result locations")
 
@@ -85,8 +86,9 @@ class DeleteForm(StatesGroup):
 async def cmd_delete(message: types.Message, state: FSMContext):
     results = await search_own_db(message.from_user.id)
     if len(results) > 0:
-        async with state.proxy() as data:
-            data['selection'] = results
+        # async with state.proxy() as data:
+        #     data['selection'] = results
+        await state.update_data(selection=results)
         await show_results(bot, message, results)
         await DeleteForm.next()
         await message.reply("Which entry do you want to delete?")
@@ -139,9 +141,7 @@ async def cmd_search(message: types.Message):
 
 @dp.message_handler(state=SearchForm.type)
 async def process_search_type(message: types.Message, state: FSMContext):
-    async with state.proxy() as data:
-        data['type'] = message.text
-    
+    await state.update_data(type=message.text)
     await SearchForm.next()
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
     markup.add("Offer", "Search")
@@ -153,38 +153,20 @@ async def process_search_type_invalid(message: types.Message):
     return await message.reply("Bad type. Choose your type from the keyboard.")
 
 async def do_search_entries(message, data, state):
-    markup = types.ReplyKeyboardRemove()
     results = await search_db(message.from_user.id, data['type'], data['kind'], data['location'], data['distance'])
     if len(results) > 0:
         data['selection'] = results
         await SearchForm.next()
-        await bot.send_message(
-                message.chat.id,
-                md.text(
-                    md.text("Found %s entries! Details:" % len(results)),
-                    sep='\n',
-                ),
-                reply_markup=markup,
-                parse_mode=ParseMode.MARKDOWN,
-            )
+        await message.reply("Found %s entries! Details:" % len(results))
         await show_results(bot, message, results)
         await message.reply("Pick one by entering its #.")
     else:
-        await bot.send_message(
-            message.chat.id,
-            md.text(
-                md.text('Found nothing! Consider creating a search entry.'),
-                sep='\n',
-            ),
-            reply_markup=markup,
-            parse_mode=ParseMode.MARKDOWN,
-        )
+        await message.reply("Found nothing! Consider creating a search entry.")
         await state.finish()
 
 @dp.message_handler(state=SearchForm.kind)
 async def process_search_kind(message: types.Message, state: FSMContext):
-    async with state.proxy() as data:
-        data['kind'] = message.text
+    await state.update_data(kind=message.text)
     await SearchForm.next()
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
     markup.add("Everywhere")
@@ -268,8 +250,7 @@ async def cmd_add(message: types.Message):
 
 @dp.message_handler(state=AddForm.kind)
 async def process_add_kind(message: types.Message, state: FSMContext):
-    async with state.proxy() as data:
-        data['kind'] = message.text
+    await state.update_data(kind=message.text)
     await AddForm.next()
     await message.reply("Where is that %s?" % message.text, reply_markup=types.ReplyKeyboardRemove())
 
@@ -279,8 +260,7 @@ async def process_add_kind_invalid(message: types.Message):
 
 @dp.message_handler(state=AddForm.type)
 async def process_add_type(message: types.Message, state: FSMContext):
-    async with state.proxy() as data:
-        data['type'] = message.text
+    await state.update_data(type=message.text)
     await AddForm.next()
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
     markup.add("Offer", "Search")
@@ -292,9 +272,7 @@ async def process_add_type_invalid(message: types.Message):
 
 @dp.message_handler(content_types=ContentType.LOCATION, state=AddForm.location)
 async def process_add_location(message: types.Message, state: FSMContext):
-    async with state.proxy() as data:
-        data['location'] = message.location
-    #await state.update_data(location=)
+    await state.update_data(location=message.location)
     await AddForm.next()
     await message.reply("Please describe %s." % data['type'])
 
@@ -304,8 +282,7 @@ async def process_add_location_invalid(message: types.Message, state: FSMContext
 
 @dp.message_handler(state=AddForm.description)
 async def process_add_description(message: types.Message, state: FSMContext):
-    async with state.proxy() as data:
-        data['description'] = message.text
+    await state.update_data(description=message.text)
     await AddForm.next()
     await message.reply("Please enter a expiration date in DD.MM.YYYY format or a number of days or 'never'.")
 
