@@ -32,7 +32,7 @@ async def delete_from_db(entry_uid):
         await db.commit()
 
 async def search_own_db(user_id):
-    query = f"SELECT * FROM geteilt where user_id = {user_id};"
+    query = f"SELECT * FROM geteilt WHERE user_id = {user_id};"
     res = []
     async with aiosqlite.connect(DB) as db:
         async with db.execute(query) as cursor:
@@ -76,8 +76,8 @@ async def init_db():
                 lat FLOAT,
                 lng FLOAT,
                 desc TEXT,
-                inserted_at text,
-                expires_at text
+                inserted_at TEXT,
+                expires_at TEXT
                 );""")
             await db.execute("SELECT AddGeometryColumn('geteilt', 'latlng', 4326, 'POINT', 'XY');")
             await db.execute("SELECT CreateSpatialIndex('geteilt', 'latlng');")
