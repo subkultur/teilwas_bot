@@ -1,0 +1,42 @@
+de:
+  food: Essen
+  thing: Sache
+  skill: Fähigkeit
+  offer: Angebot
+  search: Suche
+  all: Alles
+  cancel_state: Abgebrochen.
+  map_locations: Orte der Ergebnisse
+  no_entries_found: Keine Einträge gefunden.
+  delete_which: Welchen Eintrag willst Du löschen?
+  delete_success: Eintrag Nummer %{index} wurde erfolgreich gelöscht.
+  invalid_selection: Ungültige Auswahl. Bitte eine Zahl zwischen 1 und %{max} angeben.
+  search_what_type: Was suchst Du?
+  search_what_kind: Suchst Du ein Angebot oder eine Anfrage?
+  search_no_entries_found: Nichts gefunden! Stelle ggfs. eine Anfrage ein.
+  search_found_sth: Es wurden %{count} Einträge gefunden! Details
+  search_pick_one: Wähle einen Eintrag durch Eingabe seiner Nummer aus.
+  search_everywhere: Überall
+  search_distance: Willst Du innerhalb eines bestimmten Umkreises (in km) suchen?
+  search_location: Wo willst Du nach %{type} suchen?
+  search_invalid_distance: Ungültiger Distanz. Bitte wähle einen Eintrag von der Tastatur oder gebe eine Zahl ein (km). 
+  search_picked: Du hast Nummer %{index} ausgewählt.
+  search_notification: Benutzer %{link} hat %{desc} ausgewählt.
+  search_sent_notification: Ich habe eine Benachrichtigung an den Ersteller des Eintrags gesendet.
+  add_what_type: Was willst Du teilen?
+  invalid_type: Ungültiger Typ. Bitte wähle einen Eintrag aus der Tastatur.
+  add_what_kind: Willst Du es anbieten oder eine Suche einstellen?
+  invalid_kind: Ungültige Art. Bitte wähle einen Eintrag aus der Tastatur.
+  add_location: Wo soll geteilt werden? Bitte Ort teilen.
+  add_describe: Bitte beschreibe %{type}.
+  add_invalid_location: Ungültiger Ort. Bitte Ort teilen.
+  add_expiration: Bitte gebe ein Enddatum ein. In der Form DD.MM.JJJJ oder als Anzahl von Tagen oder 'nie' angeben.
+  add_expiration_never: nie
+  add_invalid_expiration: Ungültiges Datum. Bitte in der Form DD.MM.JJJJ oder als Anzahl von Tagen oder 'nie' angeben.
+  add_invalid_future_expiration: Bitte gebe ein Enddatum in der Zukunft ein. In der Form DD.MM.JJJJ oder als Anzahl von Tagen oder 'nie' angeben.
+  add_thanks: Danke für Deinen Beitrag!
+  details: Details
+  type: Art
+  location: Ort
+  expires_at: Ablaufdatum
+  description: Beschreibung

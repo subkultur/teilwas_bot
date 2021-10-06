@@ -6,3 +6,5 @@ python-dotenv
 # apt install libsqlite3-mod-spatialite # libspatialite-dev
 spatialite 
 pysqlite3-binary
+pyyaml>=3.10
+python-i18n[YAML]

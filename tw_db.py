@@ -5,16 +5,16 @@ DB = 'db.sqlite'
 
 async def search_db(user_id, type, kind, location, distance):
     curdate = str(datetime.now().strftime('%Y%m%d'))
-    query = "SELECT * FROM geteilt where expires_at > " + curdate
-    query += " AND user_id <> " + str(user_id) 
-    if type != 'All':
-        query += " AND type = " + type
-    if kind != 'All':
-        query += " AND kind = " + kind
+    query = f"SELECT * FROM geteilt where expires_at > {curdate}"
+    #query += f" AND user_id <> {user_id}"
+    if type != 'all':
+        query += f" AND type = '{type}'"
+    if kind != 'all':
+        query += f" AND kind = '{kind}'"
 
     if location is not None:
         dist = int(distance) * 1000
-        query += " AND (PtDistWithin(geteilt.latlng, PointFromText('POINT(" + str(location.longitude) + " " + str(location.latitude) + ")', 4326), " + str(dist) + ")=TRUE)"
+        query += f" AND (PtDistWithin(geteilt.latlng, PointFromText('POINT({location.longitude} {location.latitude})', 4326), {dist})=TRUE)"
         
     query += ";"
     res = []
@@ -28,11 +28,11 @@ async def search_db(user_id, type, kind, location, distance):
 
 async def delete_from_db(entry_uid):
     async with aiosqlite.connect(DB) as db:
-        await db.execute("DELETE FROM geteilt WHERE id = " + str(entry_uid) + ";")
+        await db.execute(f"DELETE FROM geteilt WHERE id = {entry_uid};")
         await db.commit()
 
 async def search_own_db(user_id):
-    query = "SELECT * FROM geteilt where user_id = " + str(user_id) + ";"
+    query = f"SELECT * FROM geteilt where user_id = {user_id};"
     res = []
     async with aiosqlite.connect(DB) as db:
         async with db.execute(query) as cursor:
@@ -40,17 +40,17 @@ async def search_own_db(user_id):
                 res.append(row)
     return res
 
-async def add_db_entry(user_id, type, kind, location, description, expires_at):
+async def add_db_entry(user_id, user_lang, type, kind, location, description, expires_at):
     currentDateTime = datetime.now().strftime('%Y%m%d')
     async with aiosqlite.connect(DB) as db:
         await db.enable_load_extension(True)
         await db.execute("SELECT load_extension('mod_spatialite');")
         last_row = None
-        async with db.execute("INSERT INTO geteilt(user_id, type, kind, lat, lng, desc, inserted_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?);", 
-                (user_id, type, kind, location.latitude, location.longitude, 
+        async with db.execute("INSERT INTO geteilt(user_id, user_lang, type, kind, lat, lng, desc, inserted_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);", 
+                (user_id, user_lang, type, kind, location.latitude, location.longitude, 
                 description, currentDateTime, str(expires_at.strftime('%Y%m%d')))) as cursor:
             last_row = cursor.lastrowid
-        await db.execute("UPDATE geteilt SET latlng = PointFromText('POINT(" + str(location.longitude) + " " + str(location.latitude) + ")', 4326) WHERE id = " + str(last_row) + ";")
+        await db.execute(f"UPDATE geteilt SET latlng = PointFromText('POINT({location.longitude} {location.latitude})', 4326) WHERE id = {last_row};")
         await db.commit()
 
 async def check_point_col_exists(db):
@@ -70,6 +70,7 @@ async def init_db():
             await db.execute("""CREATE TABLE IF NOT EXISTS geteilt (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER,
+                user_lang VARCHAR(2),
                 type VARCHAR(10),
                 kind VARCHAR(10),
                 lat FLOAT,
