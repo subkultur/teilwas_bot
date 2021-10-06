@@ -75,7 +75,7 @@ async def show_results(bot, message, results):
         num += 1
     await types.ChatActions.upload_photo()
     map = await render_map(locations)
-    await message.reply_photo(map, _('map_locations'))
+    await message.answer_photo(map, _('map_locations'))
 
 @dp.message_handler(state='*', commands=['cancel', 'c'])
 @dp.message_handler(Text(equals='cancel', ignore_case=True), state='*')
@@ -95,7 +95,7 @@ async def cmd_list(message: types.Message, state: FSMContext):
     if len(results) > 0:
         await show_results(bot, message, results)
     else:
-        await message.reply(_('no_entries_found'))
+        await message.answer(_('no_entries_found'))
 
 class DeleteForm(StatesGroup):
     selection = State()
@@ -108,9 +108,9 @@ async def cmd_delete(message: types.Message, state: FSMContext):
         await state.update_data(selection=results)
         await show_results(bot, message, results)
         await DeleteForm.next()
-        await message.reply(_('delete_which'))
+        await message.answer(_('delete_which'))
     else:
-        await message.reply(_('no_entries_found'))
+        await message.answer(_('no_entries_found'))
         await state.finish()
 
 @dp.message_handler(lambda message: message.text.isdigit(), state=DeleteForm.selection)
@@ -122,11 +122,11 @@ async def process_delete_selection(message: types.Message, state: FSMContext):
             result = data['selection'][sel]
             result_uid = result[0]
             await delete_from_db(result_uid)
-            await message.reply(_('delete_success', index=str(sel + 1)))
+            await message.answer(_('delete_success', index=str(sel + 1)))
             await state.finish()
         else:
             max = len(data['selection'])
-            return await message.reply(_('invalid_selection', max=str(max)))
+            return await message.answer(_('invalid_selection', max=str(max)))
 
 @dp.message_handler(lambda message: not message.text.isdigit(), state=DeleteForm.selection)
 async def process_delete_selection_invalid(message: types.Message, state: FSMContext):
@@ -134,7 +134,7 @@ async def process_delete_selection_invalid(message: types.Message, state: FSMCon
     max = 0
     async with state.proxy() as data:
         max = len(data['selection'])
-    return await message.reply(_('invalid_selection', max=str(max)))
+    return await message.answer(_('invalid_selection', max=str(max)))
 
 class SearchForm(StatesGroup):
     type = State()
@@ -150,20 +150,20 @@ async def cmd_search(message: types.Message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
     markup.add(_('food'), _('thing'), _('skill'))
     markup.add(_('all'))
-    await message.reply(_('search_what_type'), reply_markup=markup)
+    await message.answer(_('search_what_type'), reply_markup=markup)
 
 @dp.message_handler(state=SearchForm.type)
 async def process_search_type(message: types.Message, state: FSMContext):
     i18n.set('locale', message.from_user.locale.language)
     i18n_key = search_i18n_key(message.text, ['food', 'thing', 'skill', 'all'])
     if not i18n_key:
-        return await message.reply(_('invalid_type'))
+        return await message.answer(_('invalid_type'))
     await state.update_data(type=i18n_key)
     await SearchForm.next()
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
     markup.add(_('offer'), _('search'))
     markup.add(_('all'))
-    await message.reply(_('search_what_kind'), reply_markup=markup)
+    await message.answer(_('search_what_kind'), reply_markup=markup)
 
 async def search_entries(message, data, state):
     i18n.set('locale', message.from_user.locale.language)
@@ -171,11 +171,11 @@ async def search_entries(message, data, state):
     if len(results) > 0:
         data['selection'] = results
         await SearchForm.next()
-        await message.reply(_('search_found_sth', count=str(len(results))) + ':', reply_markup=types.ReplyKeyboardRemove())
+        await message.answer(_('search_found_sth', count=str(len(results))) + ':', reply_markup=types.ReplyKeyboardRemove())
         await show_results(bot, message, results)
-        await message.reply(_('search_pick_one'))
+        await message.answer(_('search_pick_one'))
     else:
-        await message.reply(_('search_no_entries_found'), reply_markup=types.ReplyKeyboardRemove())
+        await message.answer(_('search_no_entries_found'), reply_markup=types.ReplyKeyboardRemove())
         await state.finish()
 
 @dp.message_handler(state=SearchForm.kind)
@@ -183,13 +183,13 @@ async def process_search_kind(message: types.Message, state: FSMContext):
     i18n.set('locale', message.from_user.locale.language)
     i18n_key = search_i18n_key(message.text, ['offer', 'search', 'all'])
     if not i18n_key:
-        return await message.reply(_('invalid_kind'))
+        return await message.answer(_('invalid_kind'))
     await state.update_data(kind=i18n_key)
     await SearchForm.next()
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
     markup.add('5', '10', '50', '100')
     markup.add(_('search_everywhere'))
-    await message.reply(_('search_distance'), reply_markup=markup)
+    await message.answer(_('search_distance'), reply_markup=markup)
 
 @dp.message_handler(state=SearchForm.distance)
 async def process_search_distance(message: types.Message, state: FSMContext):
@@ -203,9 +203,9 @@ async def process_search_distance(message: types.Message, state: FSMContext):
         elif message.text.isdigit():
             data['distance'] = message.text
             await SearchForm.next()
-            await message.reply(_('search_location', type=_(data['type'])), reply_markup=types.ReplyKeyboardRemove())
+            await message.answer(_('search_location', type=_(data['type'])), reply_markup=types.ReplyKeyboardRemove())
         else:
-            return await message.reply(_('search_invalid_distance'))
+            return await message.answer(_('search_invalid_distance'))
 
 @dp.message_handler(content_types=ContentType.LOCATION, state=SearchForm.location)
 async def process_search_location(message: types.Message, state: FSMContext):
@@ -221,7 +221,7 @@ async def process_search_selection(message: types.Message, state: FSMContext):
         sel = int(message.text) - 1
         if sel >= 0 and sel < len(data['selection']) + 1:
             result = data['selection'][sel]
-            await message.reply(_('search_picked', index=str(sel + 1)) + '\n' + _('search_sent_notification'))
+            await message.answer(_('search_picked', index=str(sel + 1)) + '\n' + _('search_sent_notification'))
             user = str(message.from_user.id)
             link = f'[{message.from_user.mention}](tg://user?id={user})'
             i18n.set('locale', result[2])
@@ -234,14 +234,14 @@ async def process_search_selection(message: types.Message, state: FSMContext):
             await state.finish()
         else:
             max = len(data['selection'])
-            return await message.reply(_('invalid_selection', max=str(max)))
+            return await message.answer(_('invalid_selection', max=str(max)))
 
 @dp.message_handler(lambda message: not message.text.isdigit(), state=SearchForm.selection)
 async def process_search_selection_invalid(message: types.Message, state: FSMContext):
     max = 0
     async with state.proxy() as data:
         max = len(data['selection'])
-    return await message.reply(_('invalid_selection', max=str(max)))
+    return await message.answer(_('invalid_selection', max=str(max)))
 
 class AddForm(StatesGroup):
     type = State()
@@ -256,31 +256,31 @@ async def cmd_add(message: types.Message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
     i18n.set('locale', message.from_user.locale.language)
     markup.add(_('food'), _('thing'), _('skill'))
-    await message.reply(_('add_what_type'), reply_markup=markup)
+    await message.answer(_('add_what_type'), reply_markup=markup)
 
 @dp.message_handler(state=AddForm.type)
 async def process_add_type(message: types.Message, state: FSMContext):
     i18n.set('locale', message.from_user.locale.language)
     i18n_key = search_i18n_key(message.text, ['food', 'thing', 'skill'])
     if not i18n_key:
-        return await message.reply(_('invalid_type'))
+        return await message.answer(_('invalid_type'))
     else:
         await state.update_data(type=i18n_key)
         await AddForm.next()
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
         markup.add(_('offer'), _('search'))
-        await message.reply(_('add_what_kind'), reply_markup=markup)
+        await message.answer(_('add_what_kind'), reply_markup=markup)
 
 @dp.message_handler(state=AddForm.kind)
 async def process_add_kind(message: types.Message, state: FSMContext):
     i18n.set('locale', message.from_user.locale.language)
     i18n_key = search_i18n_key(message.text, ['offer', 'search'])
     if not i18n_key:
-        return await message.reply(_('invalid_kind'))
+        return await message.answer(_('invalid_kind'))
     else:   
         await state.update_data(kind=i18n_key)
         await AddForm.next()
-        await message.reply(_('add_location', type=message.text), reply_markup=types.ReplyKeyboardRemove())
+        await message.answer(_('add_location', type=message.text), reply_markup=types.ReplyKeyboardRemove())
 
 @dp.message_handler(content_types=ContentType.LOCATION, state=AddForm.location)
 async def process_add_location(message: types.Message, state: FSMContext):
@@ -288,11 +288,11 @@ async def process_add_location(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data['location'] = message.location
         await AddForm.next()
-        await message.reply(_('add_describe', type=_(data['type'])))
+        await message.answer(_('add_describe', type=_(data['type'])))
 
 @dp.message_handler(content_types=ContentType.ANY, state=AddForm.location)
 async def process_add_location_invalid(message: types.Message, state: FSMContext):
-    return await message.reply(_('add_invalid_location'))
+    return await message.answer(_('add_invalid_location'))
 
 @dp.message_handler(state=AddForm.description)
 async def process_add_description(message: types.Message, state: FSMContext):
@@ -300,13 +300,13 @@ async def process_add_description(message: types.Message, state: FSMContext):
     desc = re.sub(r'[^A-Za-z0-9\.,;:!\(\)\s]', '', message.text)
     await state.update_data(description=desc)
     await AddForm.next()
-    await message.reply(_('add_expiration'))
+    await message.answer(_('add_expiration'))
 
 @dp.message_handler(state=AddForm.expires_at)
 async def process_add_expires_at(message: types.Message, state: FSMContext):
     i18n.set('locale', message.from_user.locale.language)
     if not re.search(r'^([0-9]{1,2})\.([0-9]{1,2})\.([0-9]{4})$|^([0-9]+)$', message.text) and message.text != _('add_expiration_never'):
-        return await message.reply(_('add_invalid_expiration'))
+        return await message.answer(_('add_invalid_expiration'))
 
     expires_at = None
     expires_str = 'never'
@@ -325,9 +325,9 @@ async def process_add_expires_at(message: types.Message, state: FSMContext):
             try:
                 expires_at = datetime(yyyy, mm, dd, 23, 59, 59)
             except ValueError:
-                return await message.reply(_('add_invalid_expiration'))
+                return await message.answer(_('add_invalid_expiration'))
             if expires_at < datetime.now():
-                return await message.reply(_('add_invalid_future_expiration'))
+                return await message.answer(_('add_invalid_future_expiration'))
         expires_str = expires_at.strftime("%d.%m.%Y")
     async with state.proxy() as data:
         await bot.send_message(
