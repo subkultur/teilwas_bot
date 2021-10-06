@@ -6,7 +6,7 @@ DB = 'db.sqlite'
 async def search_db(user_id, type, kind, location, distance):
     curdate = str(datetime.now().strftime('%Y%m%d'))
     query = f"SELECT * FROM geteilt where expires_at > {curdate}"
-    #query += f" AND user_id <> {user_id}"
+    query += f" AND user_id <> {user_id}"
     if type != 'all':
         query += f" AND type = '{type}'"
     if kind != 'all':
