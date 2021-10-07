@@ -13,7 +13,7 @@ Jederzeit kann man ein Hinzufügen, Suchen oder Löschen abbrechen, wenn man die
 #### /add oder /a
 Hiermit werden neue Einträge angelegt. 
 Nach Eingabe des Kommandos wird man vom Bot durch eine Unterhaltung geführt, durch die alle wichtigen Informationen zum Angebot oder Gesuch erhoben werden. Dies sind nacheinander:
-* Kategorie des Eintrags: Essen, Sache oder Fähigkeit.
+* Kategorie des Eintrags: Essen, Sache, Kleidung oder Fähigkeit.
 * Art des Eintrags: Angebot an andere oder Gesuch von anderen.
 * Ort des Eintrags. Dies ist nötig, damit in Abhängigkeit einer Entfernung gesucht werden kann.
 * Eine Beschreibung des Eintrags.
@@ -22,7 +22,7 @@ Nach Eingabe des Kommandos wird man vom Bot durch eine Unterhaltung geführt, du
 #### /search oder /s
 Hiermit werden vorhandene Einträge anderer Benutzer gesucht.  
 Wie beim Anlegen von Einträgen fragt der Bot verschiedene Informationen zum Gesuchten ab:
-* Kategorie des Eintrags: Essen, Sache oder Fähigkeit. Auch die Wahl von Alles ist möglich, wenn die Kategorie egal ist. 
+* Kategorie des Eintrags: Essen, Sache, Kleidung oder Fähigkeit. Auch die Wahl von Alles ist möglich, wenn die Kategorie egal ist. 
 * Art des Eintrags: Angebot an andere oder Gesuch von anderen. Auch die Wahl von Alles ist möglich, wenn die Art egal ist. 
 * Entfernung des Eintrags: Hier kann man verschiedene Entfernen in Kilometern auswählen, die der Eintrag entfernt sein darf. 
 Man kann auch entweder eine beliebige Entfernung (in Kilometern) eintragen. Oder man kann "überall" wählen, dann wird die Abfrage des eigenen Ortes übersprungen.

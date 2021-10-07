@@ -148,14 +148,14 @@ async def cmd_search(message: types.Message):
     i18n.set('locale', message.from_user.locale.language)
     await SearchForm.type.set()
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
-    markup.add(_('food'), _('thing'), _('skill'))
+    markup.add(_('food'), _('thing'), _('clothes'), _('skill'))
     markup.add(_('all'))
     await message.answer(_('search_what_type'), reply_markup=markup)
 
 @dp.message_handler(state=SearchForm.type)
 async def process_search_type(message: types.Message, state: FSMContext):
     i18n.set('locale', message.from_user.locale.language)
-    i18n_key = search_i18n_key(message.text, ['food', 'thing', 'skill', 'all'])
+    i18n_key = search_i18n_key(message.text, ['food', 'thing', 'clothes', 'skill', 'all'])
     if not i18n_key:
         return await message.answer(_('invalid_type'))
     await state.update_data(type=i18n_key)
@@ -255,13 +255,13 @@ async def cmd_add(message: types.Message):
     await AddForm.type.set()
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
     i18n.set('locale', message.from_user.locale.language)
-    markup.add(_('food'), _('thing'), _('skill'))
+    markup.add(_('food'), _('thing'), _('clothes'), _('skill'))
     await message.answer(_('add_what_type'), reply_markup=markup)
 
 @dp.message_handler(state=AddForm.type)
 async def process_add_type(message: types.Message, state: FSMContext):
     i18n.set('locale', message.from_user.locale.language)
-    i18n_key = search_i18n_key(message.text, ['food', 'thing', 'skill'])
+    i18n_key = search_i18n_key(message.text, ['food', 'thing', 'clothes', 'skill'])
     if not i18n_key:
         return await message.answer(_('invalid_type'))
     else:
