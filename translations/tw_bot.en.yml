@@ -18,19 +18,25 @@ en:
   search_found_sth: Found %{count} entries! Details
   search_pick_one: Pick one by entering its number.
   search_everywhere: Everywhere
-  search_distance: Do you want to search within a specific distance (in kilometers)?
+  search_distance: Do you want to search within a specific distance (in km)?
   search_location: Where are you searching for %{type}?
-  search_invalid_distance: Bad distance. Please choose a distance from the keyboard or enter a number of kilometers.
+  invalid_distance: Bad distance. Please choose a distance from the keyboard or enter a number of kilometers.
   search_picked: You picked number %{index}.
   search_notification: User %{link} selected %{desc}.
   search_sent_notification: I sent a notification to the user that entered that offer.
+  subscribe_what_type: What type of thing do you want to subscribe?
+  subscribe_what_kind: Do you want to subscribe to offers or requests?
+  subscribe_distance: Do you want to subscribe within a specific distance (in km)?
+  subscribe_location: Where do you want to subscribe to %{type}?
+  subscribe_success: Successfully saved your subscription.
+  subscription_incoming: New entry matching your subscription.
   add_what_type: What type of thing do you want to share?
   add_invalid_type: Bad type. Choose your type from the keyboard.
   add_what_kind: Do you want to offer it or are you searching?
   add_invalid_kind: Bad kind. Choose your kind from the keyboard.
   add_location: Where is that %{type}? Please share a location.
   add_describe: Please describe %{type}.
-  add_invalid_location: Bad location. Please share a location.
+  invalid_location: Bad location. Please share a location.
   add_expiration: Please enter a expiration date in DD.MM.YYYY format or a number of days or 'never'.
   add_expiration_never: never
   invalid_expiration: Bad date. Please enter it in DD.MM.YYYY format or a number of days or 'never'.

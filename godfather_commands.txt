@@ -1,0 +1,8 @@
+cancel - Cancel current action (alias: c)
+add - Add a new entry (alias: a)
+search - Search other users' entries (alias: s)
+list - List own entries (alias: l)
+delete - Delete one of your entries (alias: d)
+subscribe -  Add a new subscription (alias: sub, add_subscription, as)
+list_subscriptions - List own subscriptions (alias: ls)
+delete_subscription - Delete one of your subscriptions (alias: ds)

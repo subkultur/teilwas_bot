@@ -4,7 +4,7 @@ de:
   clothes: Kleidung
   skill: Fähigkeit
   offer: Angebot
-  search: Suche
+  search: Anfrage
   all: Alles
   cancel_state: Abgebrochen.
   map_locations: Orte der Ergebnisse
@@ -20,17 +20,23 @@ de:
   search_everywhere: Überall
   search_distance: Willst Du innerhalb eines bestimmten Umkreises (in km) suchen?
   search_location: Wo willst Du nach %{type} suchen?
-  search_invalid_distance: Ungültiger Distanz. Bitte wähle einen Eintrag von der Tastatur oder gebe eine Zahl ein (km). 
+  invalid_distance: Ungültiger Distanz. Bitte wähle einen Eintrag von der Tastatur oder gebe eine Zahl ein (km). 
   search_picked: Du hast Nummer %{index} ausgewählt.
   search_notification: Benutzer %{link} hat %{desc} ausgewählt.
   search_sent_notification: Ich habe eine Benachrichtigung an den Ersteller des Eintrags gesendet.
+  subscribe_what_type: Was willst Du abonnieren?
+  subscribe_what_kind: Willst Du Angebote oder Anfragen abonnieren?
+  subscribe_distance: Willst Du innerhalb eines bestimmten Umkreises (in km) abonnieren?
+  subscribe_location: Wo willst Du %{type} abonnieren?
+  subscribe_success: Abonnement wurde erfolgreich eingetragen.
+  subscription_incoming: Neuer Eintrag von %{link} entsprechend Deines Abos\.
   add_what_type: Was willst Du teilen?
   invalid_type: Ungültiger Typ. Bitte wähle einen Eintrag aus der Tastatur.
   add_what_kind: Willst Du es anbieten oder eine Suche einstellen?
   invalid_kind: Ungültige Art. Bitte wähle einen Eintrag aus der Tastatur.
   add_location: Wo soll geteilt werden? Bitte Ort teilen.
   add_describe: Bitte beschreibe %{type}.
-  add_invalid_location: Ungültiger Ort. Bitte Ort teilen.
+  invalid_location: Ungültiger Ort. Bitte Ort teilen.
   add_expiration: Bitte gebe ein Enddatum ein. In der Form DD.MM.JJJJ oder als Anzahl von Tagen oder 'nie' angeben.
   add_expiration_never: nie
   add_invalid_expiration: Ungültiges Datum. Bitte in der Form DD.MM.JJJJ oder als Anzahl von Tagen oder 'nie' angeben.
