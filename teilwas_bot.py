@@ -125,7 +125,6 @@ class DeleteSubscriptionForm(StatesGroup):
 async def cmd_delete_subscription(message: types.Message, state: FSMContext):
     results = await search_db_own_subscriptions(message.from_user.id)
     i18n.set('locale', message.from_user.locale.language)
-    #await DeleteSubscriptionForm.selection.set()
     if len(results) > 0:
         await state.update_data(selection=results)
         await show_subscriptions(bot, message, results)
@@ -142,7 +141,6 @@ class DeleteForm(StatesGroup):
 async def cmd_delete(message: types.Message, state: FSMContext):
     results = await search_db_own_entry(message.from_user.id)
     i18n.set('locale', message.from_user.locale.language)
-    #await DeleteForm.selection.set()
     if len(results) > 0:
         await state.update_data(selection=results)
         await show_results(bot, message, results)

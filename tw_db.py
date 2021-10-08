@@ -54,9 +54,6 @@ async def add_db_entry(user_id, user_lang, type, kind, location, description, ex
         await db.commit()
 
 async def add_db_subscription(user_id, user_lang, type, kind, location, distance):
-    
-    #db.execute(f"SELECT * from subscriptions WHERE user_id = {user_id} AND type = '{type}' AND kind = '{kind}' ;")
-
     currentDateTime = datetime.now().strftime('%Y%m%d')
     async with aiosqlite.connect(DB) as db:
         await db.enable_load_extension(True)
