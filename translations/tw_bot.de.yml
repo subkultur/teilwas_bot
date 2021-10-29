@@ -30,6 +30,7 @@ de:
   subscribe_location: Wo willst Du %{type} abonnieren?
   subscribe_success: Abonnement wurde erfolgreich eingetragen.
   subscription_incoming: Neuer Eintrag von %{link} entsprechend Deines Abos\.
+  map_subscription_locations: Orte der Abonnements
   add_what_type: Was willst Du teilen?
   invalid_type: Ungültiger Typ. Bitte wähle einen Eintrag aus der Tastatur.
   add_what_kind: Willst Du es anbieten oder eine Suche einstellen?

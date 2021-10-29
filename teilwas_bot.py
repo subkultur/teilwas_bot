@@ -96,7 +96,7 @@ async def show_subscriptions(bot, message, results):
     if len(locations) > 0:
         await types.ChatActions.upload_photo()
         map = await render_map(locations)
-        await message.answer_photo(map, _('map_locations'))
+        await message.answer_photo(map, _('map_subscription_locations'))
 
 @dp.message_handler(state='*', commands=['cancel', 'c'])
 @dp.message_handler(Text(equals='cancel', ignore_case=True), state='*')

@@ -30,6 +30,7 @@ en:
   subscribe_location: Where do you want to subscribe to %{type}?
   subscribe_success: Successfully saved your subscription.
   subscription_incoming: New entry matching your subscription.
+  map_subscription_locations: Subscription locations
   add_what_type: What type of thing do you want to share?
   add_invalid_type: Bad type. Choose your type from the keyboard.
   add_what_kind: Do you want to offer it or are you searching?
